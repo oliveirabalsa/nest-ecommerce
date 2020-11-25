@@ -1,7 +1,9 @@
+import { UserRO } from "./user.dto";
 import { BeforeInsert, Column, CreateDateColumn } from "typeorm";
 import { PrimaryGeneratedColumn } from "typeorm/decorator/columns/PrimaryGeneratedColumn";
 import { Entity } from "typeorm/decorator/entity/Entity";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
 
 @Entity("user")
 export class UserEntity {
@@ -9,7 +11,7 @@ export class UserEntity {
   id: string;
 
   @CreateDateColumn()
-  created: Date;
+  created_at: Date;
 
   @Column({
     type: "text",
@@ -20,14 +22,30 @@ export class UserEntity {
   @Column("text")
   password: string;
 
-  @BeforeInsert()
-  async hashPassword() {
-    this.password = await bcrypt.hash(this.password, 10);
+  toResponseObject(showToken: boolean = true): UserRO {
+    const { id, created_at, username, token } = this;
+    const repsonseObject: UserRO = { id, created_at, username };
+
+    if (showToken) {
+      repsonseObject.token = token;
+    }
+    return repsonseObject;
   }
 
-  toResponseObject() {
-    const { id, created, username } = this;
+  async comparePassword(attempt: string, hash: string) {
+    const response = await bcrypt.compare(attempt, hash);
+    return response;
+  }
 
-    return { id, created, username };
+  private get token() {
+    const { id, username } = this;
+    return jwt.sign(
+      {
+        id,
+        username,
+      },
+      process.env.SECRET,
+      { expiresIn: "7d" }
+    );
   }
 }

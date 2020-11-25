@@ -9,3 +9,21 @@ export class UserDTO {
   @IsString()
   password: string;
 }
+
+export class UserRO {
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @IsNotEmpty()
+  @IsString()
+  created_at: Date;
+
+  @IsNotEmpty()
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @IsString()
+  token?: string;
+}
